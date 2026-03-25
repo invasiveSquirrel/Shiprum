@@ -19,9 +19,9 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
 }
 
-/* Hide navigation if the app has its own */
-nav, header:not(.keep) {
-  display: none !important;
+/* Allow apps to keep their internal navigation/headers */
+nav, header, .modern-header, .app-header, .nav-controls {
+  display: flex !important;
 }
 
 /* Card Styling for Wordhord/Struktur */

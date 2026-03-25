@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import isDev from 'electron-is-dev';
@@ -59,7 +59,8 @@ ipcMain.handle('start-app', async (event, appName) => {
   try {
     const proc = spawn('bash', [scriptPath], {
       detached: true,
-      stdio: 'ignore'
+      stdio: 'ignore',
+      env: { ...process.env, SHIPRUM_EMBEDDED: 'true' }
     });
     proc.unref();
     processes[appName] = proc;
@@ -74,10 +75,10 @@ ipcMain.handle('stop-app', async (event, appName) => {
   // Most of these apps have their own cleanup in the start scripts,
   // but we can add more direct pkill logic here if needed.
   const appPorts = {
-    panglossia: 8000,
-    wordhord: 8001,
-    struktur: 8003,
-    fonetik: 5175
+    panglossia: 5173,
+    wordhord: 5174,
+    fonetik: 5175,
+    struktur: 5176
   };
 
   const port = appPorts[appName];
@@ -112,6 +113,17 @@ ipcMain.handle('list-library', async () => {
   }
 });
 
+ipcMain.handle('register-source', async (event) => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    // For now we just return it, but in a real app we'd save it to a config file
+    return result.filePaths[0];
+  }
+  return null;
+});
+
 // Gemini API Integration
 ipcMain.handle('get-gemini-key', async () => {
   const keyPath = '/home/chris/wordhord/wordhord_api.txt';
@@ -126,7 +138,7 @@ ipcMain.handle('get-gemini-key', async () => {
 
 // Real Data Integration: Panglossia Logs
 ipcMain.handle('get-recent-discussions', async () => {
-  const discussionsPath = '/home/chris/panglossia/Discussions';
+  const discussionsPath = '/home/chris/panglossia/discussions';
   try {
     const files = await fs.readdir(discussionsPath);
     const mdFiles = files.filter(f => f.endsWith('.md')).sort((a, b) => b.localeCompare(a)).slice(0, 5);

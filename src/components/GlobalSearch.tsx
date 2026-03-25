@@ -13,19 +13,33 @@ export default function GlobalSearch() {
 
     setIsLoading(true);
     try {
-      // Query Wordhord (Example language: Swedish, can be expanded to all supported)
-      const languages = ['swedish', 'german', 'finnish', 'dutch', 'spanish', 'portuguese'];
+      const endpoints = [
+        { name: 'Wordhord', url: 'http://localhost:8001/cards/swedish', type: 'Lexeme' },
+        { name: 'Struktur', url: 'http://localhost:8003/analysis', type: 'Syntax' },
+        { name: 'Fonetik', url: 'http://localhost:8004/ipa', type: 'Phonetic' }
+      ];
+
       const allResults: any[] = [];
 
-      for (const lang of languages) {
-        const resp = await fetch(`http://localhost:8001/cards/${lang}`);
-        if (resp.ok) {
-          const data = await resp.json();
-          const filtered = data.cards.filter((c: any) => 
-            c.term.toLowerCase().includes(query.toLowerCase()) || 
-            c.translation.toLowerCase().includes(query.toLowerCase())
-          );
-          allResults.push(...filtered.map((c: any) => ({ ...c, source: 'Wordhord', lang })));
+      for (const endpoint of endpoints) {
+        try {
+          const resp = await fetch(endpoint.url);
+          if (resp.ok) {
+            const data = await resp.json();
+            // Basic filtering based on typical schema
+            const items = data.cards || data.ipa || data.results || [];
+            const filtered = items.filter((item: any) => 
+              JSON.stringify(item).toLowerCase().includes(query.toLowerCase())
+            );
+            allResults.push(...filtered.map((item: any) => ({ 
+              ...item, 
+              source: endpoint.name, 
+              type: endpoint.type,
+              term: item.term || item.token || item.symbol || 'Result'
+            })));
+          }
+        } catch (err) {
+          console.warn(`Could not fetch from ${endpoint.name}:`, err);
         }
       }
       setResults(allResults);

@@ -4,19 +4,29 @@ import { useState, useEffect } from 'react';
 
 export default function Sources() {
   const [library, setLibrary] = useState<Record<string, string[]>>({});
+  const [sources, setSources] = useState<string[]>(['/home/chris/struktur/library']);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const fetchLibrary = async () => {
+    try {
+      const data = await globalThis.electronAPI.listLibrary();
+      setLibrary(data);
+    } catch (err) {
+      console.error('Error fetching library:', err);
+    }
+  };
+
   useEffect(() => {
-    const fetchLibrary = async () => {
-      try {
-        const data = await globalThis.electronAPI.listLibrary();
-        setLibrary(data);
-      } catch (err) {
-        console.error('Error fetching library:', err);
-      }
-    };
     fetchLibrary();
   }, []);
+
+  const handleRegister = async () => {
+    const newPath = await globalThis.electronAPI.registerSource();
+    if (newPath && !sources.includes(newPath)) {
+      setSources([...sources, newPath]);
+      // In a real app we'd trigger a re-scan of this specific path
+    }
+  };
 
   return (
     <motion.div 
@@ -31,7 +41,10 @@ export default function Sources() {
             Register and interrogate your linguistic corpora. Support for PDF, Markdown, and custom path indexing.
           </p>
         </div>
-        <button className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 font-label text-xs uppercase tracking-widest hover:opacity-90 transition-opacity">
+        <button 
+          onClick={handleRegister}
+          className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 font-label text-xs uppercase tracking-widest hover:opacity-90 transition-opacity"
+        >
           <Plus size={16} /> Register Path
         </button>
       </div>
@@ -51,7 +64,7 @@ export default function Sources() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(library).map(([lang, files]) => (
+            {(Object.entries(library) as [string, string[]][]).map(([lang, files]) => (
               <div key={lang} className="bg-surface-container p-6 border border-outline-variant/5 group hover:border-primary/20 transition-all">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-headline text-lg uppercase tracking-tight text-primary/80">{lang}</h3>

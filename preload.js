@@ -15,5 +15,6 @@ contextBridge.exposeInMainWorld(
     getAppStats: () => ipcRenderer.invoke('get-app-stats'),
     getDeepLKey: () => ipcRenderer.invoke('get-deepl-key'),
     saveDeepLKey: (key) => ipcRenderer.invoke('save-deepl-key', key),
+    registerSource: () => ipcRenderer.invoke('register-source'),
   }
 );

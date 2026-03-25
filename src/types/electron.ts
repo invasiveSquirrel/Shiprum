@@ -10,6 +10,7 @@ export interface ElectronAPI {
   getAppStats: () => Promise<any>;
   getDeepLKey: () => Promise<string | null>;
   saveDeepLKey: (key: string) => Promise<boolean>;
+  registerSource: () => Promise<string | null>;
 }
 
 declare global {
