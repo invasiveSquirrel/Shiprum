@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --font-headline: "Newsreader", serif;
+  --font-body: "Newsreader", serif;
+  --font-label: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-surface: #0c0e11;
+  --color-on-surface: #e0e6f1;
+  --color-primary: #cec6b5;
+  --color-on-primary: #454033;
+  --color-primary-container: #4c463a;
+  --color-on-primary-container: #d8cfbf;
+  --color-secondary: #979ead;
+  --color-on-secondary: #19202c;
+  --color-secondary-container: #353c48;
+  --color-on-secondary-container: #b9bfcf;
+  --color-outline: #707680;
+  --color-outline-variant: #424851;
+  --color-surface-container-lowest: #000000;
+  --color-surface-container-low: #111418;
+  --color-surface-container: #161a1f;
+  --color-surface-container-high: #1b2027;
+  --color-surface-container-highest: #20262e;
+  --color-on-surface-variant: #a5abb6;
+}
+
+@layer base {
+  @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  body {
+    @apply bg-surface text-on-surface font-body selection:bg-primary/30;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline;
+  }
+
+  * {
+    @apply rounded-none border-none;
+  }
+}
+
+@layer utilities {
+  .scholarly-shadow {
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  }
+  
+  .glass-panel {
+    @apply backdrop-blur-xl bg-surface-container-highest/70;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
