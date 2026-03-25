@@ -8,22 +8,23 @@ import { AppContext, View } from './context';
 import Sidebar from './components/Sidebar';
 import TopNav from './components/TopNav';
 import Dashboard from './components/Dashboard';
-import Analysis from './components/Analysis';
+import Library from './components/Sources';
 import GlobalSearch from './components/GlobalSearch';
 import AppEmbed from './components/AppEmbed';
-import Library from './components/Library';
 import Discussions from './components/Discussions';
 import { AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [activeDiscussion, setActiveDiscussion] = useState<any | null>(null);
 
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard />;
       case 'sources':
-        return <Analysis />;
+      case 'library':
+        return <Library />;
       case 'discussions':
         return <Discussions />;
       case 'search':
@@ -36,14 +37,17 @@ export default function App() {
         return <AppEmbed appName="fonetik" port={5175} />;
       case 'struktur':
         return <AppEmbed appName="struktur" port={5176} />;
-      case 'library':
-        return <Library />;
       default:
         return <Dashboard />;
     }
   };
 
-  const contextValue = useMemo(() => ({ currentView, setCurrentView }), [currentView]);
+  const contextValue = useMemo(() => ({ 
+    currentView, 
+    setCurrentView,
+    activeDiscussion,
+    setActiveDiscussion
+  }), [currentView, activeDiscussion]);
 
   return (
     <AppContext.Provider value={contextValue}>
@@ -58,9 +62,6 @@ export default function App() {
             </div>
           </AnimatePresence>
         </main>
-
-        {/* Global Grain Overlay for texture - local replacement or removed to stop 403 */}
-        <div className="fixed inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay z-[100] bg-noise"></div>
       </div>
     </AppContext.Provider>
   );

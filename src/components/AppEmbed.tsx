@@ -35,7 +35,8 @@ export default function AppEmbed({ appName, port }: Readonly<AppEmbedProps>) {
 
     const handleDomReady = async () => {
       try {
-        const cssContent = await globalThis.electronAPI.readFile('/home/chris/Shiprum/src/styles/shiprum-guest.css');
+        // Using a relative path that should resolve from the project root in the main process
+        const cssContent = await globalThis.electronAPI.readFile('src/styles/shiprum-guest.css');
         await webview.insertCSS(cssContent);
         console.log(`Injected Shiprum theme into ${appName}`);
       } catch (err) {
@@ -83,7 +84,7 @@ export default function AppEmbed({ appName, port }: Readonly<AppEmbedProps>) {
         ref={webviewRef}
         src={`http://localhost:${port}`} 
         className="w-full h-full"
-        allowpopups="true"
+        {...{ allowpopups: "true" } as any} 
         style={{ border: 'none' }}
       />
     </div>

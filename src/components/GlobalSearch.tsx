@@ -1,216 +1,199 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { Search, History, Loader2, BookOpen, Mic } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { 
+  Search, 
+  Command, 
+  Languages, 
+  ExternalLink, 
+  Globe, 
+  Cpu, 
+  Hash, 
+  BookOpen,
+  ArrowRight
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useApp } from '../context';
+
+type SearchSource = 'all' | 'panglossia' | 'wordhord' | 'fonetik' | 'struktur' | 'deepl' | 'web';
 
 export default function GlobalSearch() {
+  const { setCurrentView } = useApp();
   const [query, setQuery] = useState('');
+  const [source, setSource] = useState<SearchSource>('all');
   const [results, setResults] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query) return;
-
-    setIsLoading(true);
+  const performSearch = async (val: string) => {
+    if (!val.trim()) {
+      setResults([]);
+      return;
+    }
+    setIsSearching(true);
+    
     try {
-      const endpoints = [
-        { name: 'Wordhord', url: 'http://localhost:8001/cards/swedish', type: 'Lexeme' },
-        { name: 'Struktur', url: 'http://localhost:8003/analysis', type: 'Syntax' },
-        { name: 'Fonetik', url: 'http://localhost:8004/ipa', type: 'Phonetic' }
+      const apps = [
+        { id: 'panglossia', name: 'Panglossia', port: 5173, type: 'Discussions' },
+        { id: 'wordhord', name: 'Wordhord', port: 5174, type: 'Dictionary' },
+        { id: 'fonetik', name: 'Fonetik', port: 5175, type: 'Phonology' },
+        { id: 'struktur', name: 'Struktur', port: 5176, type: 'Syntax' }
       ];
 
       const allResults: any[] = [];
 
-      for (const endpoint of endpoints) {
+      for (const app of apps) {
+        if (source !== 'all' && source !== app.id) continue;
+        
         try {
-          const resp = await fetch(endpoint.url);
-          if (resp.ok) {
-            const data = await resp.json();
-            // Basic filtering based on typical schema
-            const items = data.cards || data.ipa || data.results || [];
-            const filtered = items.filter((item: any) => 
-              JSON.stringify(item).toLowerCase().includes(query.toLowerCase())
-            );
-            allResults.push(...filtered.map((item: any) => ({ 
-              ...item, 
-              source: endpoint.name, 
-              type: endpoint.type,
-              term: item.term || item.token || item.symbol || 'Result'
-            })));
+          // Attempt to fetch from the app's search endpoint if it exists
+          // For now, many apps use port 8000+ for backends
+          const backendPort = app.port === 5173 ? 8000 : app.port === 5174 ? 8001 : app.port === 5175 ? 8002 : 8003;
+          
+          // Reverting to a more robust internal search check if apps support it
+          // OR use the electronAPI.searchApp if implemented
+          const appResults = await globalThis.electronAPI?.searchApp?.(app.id, val);
+          if (appResults) {
+            allResults.push(...appResults.map((r: any) => ({ ...r, source: app.name, type: app.type })));
           }
         } catch (err) {
-          console.warn(`Could not fetch from ${endpoint.name}:`, err);
+          // Silent fail
         }
       }
+
+      if (source === 'deepl' || source === 'all') {
+        allResults.push({
+          id: 'deepl-link',
+          title: `Translate "${val}" via DeepL`,
+          desc: 'High-precision neural translation for scholarly research.',
+          source: 'DeepL',
+          type: 'Translation',
+          isExternal: true,
+          url: `https://www.deepl.com/translator#any/en/${encodeURIComponent(val)}`
+        });
+      }
+
+      if (source === 'web' || source === 'all') {
+         allResults.push({
+          id: 'google-link',
+          title: `Search Web for "${val}"`,
+          desc: 'Broad spectrum linguistic and etymological inquiry.',
+          source: 'Web',
+          type: 'Search',
+          isExternal: true,
+          url: `https://www.google.com/search?q=${encodeURIComponent(val + " etymology")}`
+        });
+      }
+
       setResults(allResults);
     } catch (err) {
-      console.error('Search error:', err);
+      console.error('Global search error:', err);
     } finally {
-      setIsLoading(false);
+      setIsSearching(false);
     }
   };
 
+  useEffect(() => {
+    const timer = setTimeout(() => performSearch(query), 300);
+    return () => clearTimeout(timer);
+  }, [query, source]);
+
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="max-w-[1000px] mx-auto py-12"
-    >
-      <div className="w-full mb-12 flex justify-between items-end border-b border-outline-variant/5 pb-8">
-        <div className="space-y-1">
-          <h1 className="font-headline text-5xl font-semibold tracking-tight text-on-surface">Global Search</h1>
-          <p className="text-on-surface-variant font-label text-[10px] tracking-[0.3em] uppercase">Cross-Database Linguistic Query • Šiprum Environment</p>
+    <div className="max-w-5xl mx-auto px-4 py-12 min-h-[80vh]">
+      <header className="mb-12 text-center">
+        <div className="flex justify-center mb-6">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20">
+            <Command className="text-primary" size={32} />
+          </div>
+        </div>
+        <h1 className="text-5xl font-headline italic mb-4">Sōkjan Hub</h1>
+        <p className="text-outline-variant font-body uppercase tracking-[0.3em] text-[10px]">Universal Linguistic Intelligence</p>
+      </header>
+
+      <div className="bg-surface-container-low border border-outline-variant/10 shadow-2xl p-2 rounded-2xl mb-8">
+        <div className="flex items-center gap-4 px-6 h-16">
+          <Search className="text-outline" size={24} />
+          <input 
+            type="text" 
+            autoFocus
+            placeholder="Search keywords, terms, or semantic roots..."
+            className="flex-1 bg-transparent border-none outline-none text-2xl font-body placeholder:text-outline/30 placeholder:italic"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {isSearching && (
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+              className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full"
+            />
+          )}
         </div>
       </div>
 
-      <div className="space-y-12">
-        <section className="relative group">
-          <form onSubmit={handleSearch} className="bg-surface-container-low p-2 border border-outline-variant/10 shadow-2xl focus-within:border-primary/30 transition-all duration-500">
-            <div className="flex items-center px-4 py-2">
-              <Search className="text-on-surface-variant mr-4" size={32} />
-              <input 
-                type="text" 
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full bg-transparent border-none focus:ring-0 text-2xl font-body placeholder:text-on-surface-variant/40 text-on-surface py-4"
-                placeholder="Search lexemes, phonemes, or research papers..."
-              />
-              {isLoading ? (
-                <Loader2 className="animate-spin text-primary" size={24} />
-              ) : (
-                <kbd className="hidden md:inline-flex items-center gap-1 px-3 py-1 text-[10px] font-bold text-on-surface-variant bg-surface-container-highest border border-outline-variant/20">
-                  ENTER
-                </kbd>
-              )}
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-3 px-4 pb-4 mt-2">
-              {[
-                { label: 'Language: All' },
-                { label: 'Source: Local Hub' },
-                { label: 'Phonetic: Enabled' }
-              ].map((filter, i) => (
-                <div key={i} className="flex items-center gap-2 bg-surface-container-high px-3 py-1.5 text-[10px] font-bold text-on-surface-variant border border-outline-variant/20 cursor-pointer hover:bg-surface-container-highest transition-colors uppercase tracking-widest">
-                  {filter.label}
-                </div>
-              ))}
-            </div>
-          </form>
-        </section>
+      <div className="flex flex-wrap gap-2 mb-12 justify-center">
+        {[
+          { id: 'all', label: 'All Sources', icon: <Hash size={14} /> },
+          { id: 'panglossia', label: 'Panglossia', icon: <Cpu size={14} /> },
+          { id: 'wordhord', label: 'Wordhord', icon: <BookOpen size={14} /> },
+          { id: 'deepl', label: 'DeepL', icon: <Languages size={14} /> },
+          { id: 'web', label: 'Web Search', icon: <Globe size={14} /> },
+        ].map((btn) => (
+          <button
+            key={btn.id}
+            onClick={() => setSource(btn.id as any)}
+            className={`px-6 py-2 rounded-full border transition-all flex items-center gap-2 font-label text-[10px] uppercase tracking-widest ${
+              source === btn.id 
+                ? 'bg-primary text-on-primary border-primary' 
+                : 'bg-surface-container-highest/20 border-outline-variant/10 text-outline hover:border-primary/50'
+            }`}
+          >
+            {btn.icon}
+            {btn.label}
+          </button>
+        ))}
+      </div>
 
-        {results.length > 0 && (
-          <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="flex items-center justify-between border-b border-outline-variant/10 pb-4 mb-6">
-              <h3 className="text-[10px] font-bold text-primary tracking-[0.2em] uppercase font-label">Linguistic Hub Results</h3>
-              <span className="text-[9px] text-on-surface-variant bg-surface-container-highest px-2 py-0.5 rounded tracking-tighter uppercase">{results.length} Matches</span>
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              {results.map((res, i) => (
-                <div key={i} className="bg-surface-container border border-outline-variant/5 p-4 rounded-xl flex items-center justify-between group hover:bg-surface-container-high transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-headline italic">
-                      {res.lang.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-headline text-lg italic text-on-surface">{res.term}</span>
-                        <span className="text-xs text-on-surface-variant opacity-40">[{res.ipa}]</span>
-                      </div>
-                      <p className="text-sm text-on-surface-variant line-clamp-1">{res.translation}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[9px] font-bold text-primary uppercase tracking-widest block">{res.source}</span>
-                    <span className="text-[8px] text-on-surface-variant uppercase tracking-tighter">{res.level || 'General'}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-          <div className="md:col-span-4 space-y-6">
-            <div className="flex items-center justify-between border-b border-outline-variant/10 pb-2">
-              <h3 className="text-[10px] font-bold text-on-surface-variant tracking-[0.2em] uppercase">Recent Queries</h3>
-              <History className="text-on-surface-variant/50 cursor-pointer" size={14} />
-            </div>
-            <ul className="space-y-1">
-              {[
-                { title: 'Proto-Germanic Vowel Shifts', meta: '2 hours ago • Phonology' },
-                { title: 'Syntax of Austronesian', meta: 'Yesterday • Morphosyntax' },
-                { title: 'Grimm\'s Law', meta: 'Oct 24 • Historical' }
-              ].map((q, i) => (
-                <li key={i} className="group flex items-center justify-between p-3 hover:bg-surface-container-low transition-all cursor-pointer">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-on-surface group-hover:text-primary transition-colors font-headline italic">{q.title}</span>
-                    <span className="text-[9px] text-on-surface-variant uppercase tracking-widest mt-1">{q.meta}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="md:col-span-8 space-y-6">
-            <div className="flex items-center justify-between border-b border-outline-variant/10 pb-2">
-              <h3 className="text-[10px] font-bold text-on-surface-variant tracking-[0.2em] uppercase">Scholarly Recommendations</h3>
-              <span className="text-[9px] text-primary font-bold px-2 py-0.5 bg-primary/10 uppercase tracking-widest">AI Curated</span>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { 
-                  icon: <BookOpen size={20} />, 
-                  title: 'Lexical Analysis of Middle High German', 
-                  desc: 'Recent thesis upload exploring the semantical shift in courtly literature.',
-                  tag: 'Archive Access'
-                },
-                { 
-                  icon: <Mic size={20} />, 
-                  title: 'Phonetic Database: Uralic Dialects', 
-                  desc: 'High-fidelity recordings and spectrograms from recent field research.',
-                  tag: 'Active Project'
+      <div className="space-y-4">
+        <AnimatePresence mode="popLayout">
+          {results.map((result, idx) => (
+            <motion.div
+              layout
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              key={result.id || `${result.source}-${idx}`}
+              className="bg-surface-container-low p-6 border border-outline-variant/10 group hover:border-primary/30 transition-all cursor-pointer shadow-sm hover:shadow-xl"
+              onClick={() => {
+                if (result.isExternal) {
+                  window.open(result.url, '_blank');
+                } else {
+                  setCurrentView(result.source.toLowerCase() as any);
                 }
-              ].map((rec, i) => (
-                <div key={i} className="group relative bg-surface-container-low p-5 border border-outline-variant/5 hover:border-primary/20 transition-all cursor-pointer h-48 flex flex-col justify-between">
-                  <div>
-                    <div className="w-8 h-8 bg-surface-container-highest flex items-center justify-center mb-4 text-primary">
-                      {rec.icon}
-                    </div>
-                    <h4 className="font-headline text-lg font-medium leading-tight text-on-surface italic">{rec.title}</h4>
-                    <p className="text-[11px] text-on-surface-variant mt-2 line-clamp-2 font-body">{rec.desc}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] font-bold text-primary uppercase tracking-widest">{rec.tag}</span>
-                    <div className="h-[1px] flex-grow bg-outline-variant/10"></div>
-                  </div>
+              }}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-[9px] bg-primary-container text-on-primary-container px-2 py-0.5 font-bold tracking-tighter uppercase">{result.type}</span>
+                  <span className="text-[9px] text-outline uppercase tracking-widest font-label">{result.source}</span>
                 </div>
-              ))}
-            </div>
-
-            <div className="pt-4">
-              <h4 className="text-[9px] font-bold text-on-surface-variant tracking-[0.3em] uppercase mb-4">Popular Fields</h4>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  'Etymology', 'Cognitive Linguistics', 'Sociolinguistics', 'Dead Languages', 'Natural Language Processing'
-                ].map(tag => (
-                  <span key={tag} className="px-3 py-1 bg-surface-container-high text-[10px] text-on-surface-variant hover:text-on-surface hover:bg-primary/20 cursor-pointer transition-colors border border-outline-variant/10 uppercase tracking-widest">
-                    {tag}
-                  </span>
-                ))}
+                {result.isExternal ? <ExternalLink size={14} className="text-primary" /> : <ArrowRight size={14} className="text-primary opacity-0 group-hover:opacity-100 transition-opacity" />}
               </div>
-            </div>
-          </div>
-        </div>
+              <h3 className="text-2xl font-headline italic group-hover:text-primary transition-colors">{result.title}</h3>
+              <p className="text-on-surface-variant font-body text-sm line-clamp-2 mt-2 opacity-80">{result.desc || result.content}</p>
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
-        <footer className="mt-20 border-t border-outline-variant/10 pt-8 flex flex-col md:flex-row justify-between items-center opacity-40 hover:opacity-100 transition-opacity duration-500">
-          <p className="text-[9px] font-medium tracking-[0.2em] text-on-surface-variant uppercase">Connected to: Oxford Linguistic Corpus, MIT Cog-Science Data, & Šiprum Local Archives</p>
-          <div className="flex gap-6 mt-4 md:mt-0">
-            <span className="text-[9px] font-medium text-on-surface-variant uppercase tracking-[0.2em]">Latency: 24ms</span>
-            <span className="text-[9px] font-medium text-on-surface-variant uppercase tracking-[0.2em]">Status: Synchronized</span>
+        {query && !isSearching && results.length === 0 && (
+          <div className="text-center py-24 border-2 border-dashed border-outline-variant/10 rounded-3xl">
+            <p className="text-outline italic font-body">No internal records match this inquiry.</p>
+            <button 
+              className="mt-6 text-primary font-label text-[10px] uppercase tracking-widest border-b border-primary/20 hover:border-primary pb-1"
+              onClick={() => setSource('web')}
+            >
+              Try Global Web Inquiry
+            </button>
           </div>
-        </footer>
+        )}
       </div>
-    </motion.div>
+    </div>
   );
 }

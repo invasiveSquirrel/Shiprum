@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { MessageSquare, ChevronLeft, Zap, Calendar, Database } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -9,7 +9,10 @@ interface Discussion {
   fullPath: string;
 }
 
+import { useApp } from '../context';
+
 export default function Discussions() {
+  const { activeDiscussion, setActiveDiscussion } = useApp();
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [selectedDisc, setSelectedDisc] = useState<Discussion | null>(null);
   const [content, setContent] = useState<string>('');
@@ -29,6 +32,20 @@ export default function Discussions() {
     fetchDiscussions();
   }, []);
 
+  const initialized = useRef(false);
+  useEffect(() => {
+    if (activeDiscussion && !selectedDisc && !initialized.current) {
+      handleSelect(activeDiscussion);
+      initialized.current = true;
+    }
+  }, [activeDiscussion, discussions]);
+
+  const handleBack = () => {
+    setSelectedDisc(null);
+    setActiveDiscussion(null);
+    initialized.current = false;
+  };
+
   const handleSelect = async (disc: any) => {
     setSelectedDisc(disc);
     const text = await globalThis.electronAPI.readFile(disc.fullPath);
@@ -38,12 +55,34 @@ export default function Discussions() {
   const [summary, setSummary] = useState<string | null>(null);
 
   const handleSummarize = async () => {
+    if (!content) return;
     setIsSummarizing(true);
-    // Real Gemini call would go here
-    setTimeout(() => {
-      setSummary("Linguistic synthesis complete: This discussion centers on the phonetic drift of labio-velars in Proto-Indo-European, specifically focusing on the *kʷ and *gʷ shifts in Anatolian vs. Hellenic branches. Cross-referenced with Struktur library [Hittite_Phonology.pdf].");
+    try {
+      const apiKey = await globalThis.electronAPI.getGeminiKey();
+      if (!apiKey) {
+        setSummary("Error: Gemini API key not found in Wordhord configuration.");
+        setIsSummarizing(false);
+        return;
+      }
+      
+      const prompt = `You are a comparative linguist. Analyze the following dialogue for phonetic shifts, grammatical patterns, and cultural context. Cross-reference with your knowledge of Indo-European studies.\n\nDIALOGUE:\n${content}`;
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+      
+      const data = await response.json();
+      const synthesis = data.candidates?.[0]?.content?.parts?.[0]?.text || "Synthesis failed to generate.";
+      setSummary(synthesis);
+    } catch (err) {
+      setSummary(`Synthesis failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
       setIsSummarizing(false);
-    }, 2000);
+    }
   };
 
   if (loading) return <div className="animate-pulse h-64 bg-surface-container rounded-lg" />;
@@ -55,7 +94,7 @@ export default function Discussions() {
         animate={{ opacity: 1, x: 0 }}
       >
         <button 
-          onClick={() => setSelectedDisc(null)}
+          onClick={handleBack}
           className="flex items-center gap-2 text-primary font-label text-[10px] uppercase tracking-widest mb-8 hover:underline group"
         >
           <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Back to Archive
