@@ -1,0 +1,54 @@
+/* 
+  Shiprum Guest Theme Injection
+  This CSS is injected into embedded apps to unify their appearance with the Hub.
+*/
+
+:root {
+  --primary: #b8c5d6;
+  --on-primary: #1e3146;
+  --surface: #0c0e11;
+  --on-surface: #e1e2e6;
+  --outline: #8e9199;
+  --surface-container: #1b1c1f;
+  --surface-container-high: #252629;
+}
+
+body {
+  background-color: var(--surface) !important;
+  color: var(--on-surface) !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+}
+
+/* Hide navigation if the app has its own */
+nav, header:not(.keep) {
+  display: none !important;
+}
+
+/* Card Styling for Wordhord/Struktur */
+.card, [class*="card"] {
+  background-color: var(--surface-container) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  color: var(--on-surface) !important;
+}
+
+/* Buttons */
+button, .btn {
+  border-radius: 4px !important;
+  text-transform: uppercase !important;
+  font-size: 10px !important;
+  letter-spacing: 0.1em;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(184, 197, 214, 0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(184, 197, 214, 0.4);
+}

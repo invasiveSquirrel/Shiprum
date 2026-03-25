@@ -7,7 +7,9 @@ import {
   Network, 
   Settings, 
   HelpCircle,
-  Search
+  Search,
+  MessageSquare,
+  Database
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -15,10 +17,13 @@ export default function Sidebar() {
   const { currentView, setCurrentView } = useApp();
 
   const navItems: { id: View; icon: React.ReactNode; label: string }[] = [
-    { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Panglossia' },
-    { id: 'analysis', icon: <BookOpen size={20} />, label: 'Wordhord' },
-    { id: 'curriculum', icon: <Mic2 size={20} />, label: 'Fonetik' },
-    { id: 'search', icon: <Network size={20} />, label: 'Struktur' },
+    { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Home' },
+    { id: 'panglossia', icon: <MessageSquare size={20} />, label: 'Panglossia' },
+    { id: 'wordhord', icon: <BookOpen size={20} />, label: 'Wordhord' },
+    { id: 'fonetik', icon: <Mic2 size={18} />, label: 'Fonetik' },
+    { id: 'struktur', icon: <Network size={20} />, label: 'Struktur' },
+    { id: 'library', icon: <Search size={20} />, label: 'Sources' },
+    { id: 'discussions', icon: <Database size={20} />, label: 'Discussions' },
   ];
 
   return (

@@ -1,7 +1,41 @@
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Search, History, Sparkles, BookOpen, Mic } from 'lucide-react';
+import { Search, History, Loader2, BookOpen, Mic } from 'lucide-react';
 
 export default function GlobalSearch() {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query) return;
+
+    setIsLoading(true);
+    try {
+      // Query Wordhord (Example language: Swedish, can be expanded to all supported)
+      const languages = ['swedish', 'german', 'finnish', 'dutch', 'spanish', 'portuguese'];
+      const allResults: any[] = [];
+
+      for (const lang of languages) {
+        const resp = await fetch(`http://localhost:8001/cards/${lang}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          const filtered = data.cards.filter((c: any) => 
+            c.term.toLowerCase().includes(query.toLowerCase()) || 
+            c.translation.toLowerCase().includes(query.toLowerCase())
+          );
+          allResults.push(...filtered.map((c: any) => ({ ...c, source: 'Wordhord', lang })));
+        }
+      }
+      setResults(allResults);
+    } catch (err) {
+      console.error('Search error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -13,42 +47,73 @@ export default function GlobalSearch() {
           <h1 className="font-headline text-5xl font-semibold tracking-tight text-on-surface">Global Search</h1>
           <p className="text-on-surface-variant font-label text-[10px] tracking-[0.3em] uppercase">Cross-Database Linguistic Query • Šiprum Environment</p>
         </div>
-        <button className="text-[10px] font-bold text-primary hover:text-on-surface transition-colors border-b border-primary/20 pb-1 uppercase tracking-widest">
-          Advanced Syntax Guide
-        </button>
       </div>
 
       <div className="space-y-12">
         <section className="relative group">
-          <div className="bg-surface-container-low p-2 border border-outline-variant/10 shadow-2xl focus-within:border-primary/30 transition-all duration-500">
+          <form onSubmit={handleSearch} className="bg-surface-container-low p-2 border border-outline-variant/10 shadow-2xl focus-within:border-primary/30 transition-all duration-500">
             <div className="flex items-center px-4 py-2">
               <Search className="text-on-surface-variant mr-4" size={32} />
               <input 
                 type="text" 
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 className="w-full bg-transparent border-none focus:ring-0 text-2xl font-body placeholder:text-on-surface-variant/40 text-on-surface py-4"
                 placeholder="Search lexemes, phonemes, or research papers..."
               />
-              <kbd className="hidden md:inline-flex items-center gap-1 px-3 py-1 text-[10px] font-bold text-on-surface-variant bg-surface-container-highest border border-outline-variant/20">
-                ⌘K
-              </kbd>
+              {isLoading ? (
+                <Loader2 className="animate-spin text-primary" size={24} />
+              ) : (
+                <kbd className="hidden md:inline-flex items-center gap-1 px-3 py-1 text-[10px] font-bold text-on-surface-variant bg-surface-container-highest border border-outline-variant/20">
+                  ENTER
+                </kbd>
+              )}
             </div>
             
             <div className="flex flex-wrap items-center gap-3 px-4 pb-4 mt-2">
               {[
-                { label: 'Language: Indo-European' },
-                { label: 'Source: Academic Journals' },
-                { label: 'Phonetic: IPA Transcription' }
+                { label: 'Language: All' },
+                { label: 'Source: Local Hub' },
+                { label: 'Phonetic: Enabled' }
               ].map((filter, i) => (
                 <div key={i} className="flex items-center gap-2 bg-surface-container-high px-3 py-1.5 text-[10px] font-bold text-on-surface-variant border border-outline-variant/20 cursor-pointer hover:bg-surface-container-highest transition-colors uppercase tracking-widest">
                   {filter.label}
                 </div>
               ))}
-              <button className="ml-auto text-[10px] font-bold text-primary px-4 py-1.5 hover:bg-primary/10 transition-colors uppercase tracking-widest">
-                Clear All
-              </button>
             </div>
-          </div>
+          </form>
         </section>
+
+        {results.length > 0 && (
+          <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div className="flex items-center justify-between border-b border-outline-variant/10 pb-4 mb-6">
+              <h3 className="text-[10px] font-bold text-primary tracking-[0.2em] uppercase font-label">Linguistic Hub Results</h3>
+              <span className="text-[9px] text-on-surface-variant bg-surface-container-highest px-2 py-0.5 rounded tracking-tighter uppercase">{results.length} Matches</span>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              {results.map((res, i) => (
+                <div key={i} className="bg-surface-container border border-outline-variant/5 p-4 rounded-xl flex items-center justify-between group hover:bg-surface-container-high transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-headline italic">
+                      {res.lang.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-headline text-lg italic text-on-surface">{res.term}</span>
+                        <span className="text-xs text-on-surface-variant opacity-40">[{res.ipa}]</span>
+                      </div>
+                      <p className="text-sm text-on-surface-variant line-clamp-1">{res.translation}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[9px] font-bold text-primary uppercase tracking-widest block">{res.source}</span>
+                    <span className="text-[8px] text-on-surface-variant uppercase tracking-tighter">{res.level || 'General'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           <div className="md:col-span-4 space-y-6">

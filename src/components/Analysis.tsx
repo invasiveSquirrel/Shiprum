@@ -73,14 +73,9 @@ export default function Analysis() {
             </div>
           </div>
 
-          <div className="relative aspect-[4/5] overflow-hidden scholarly-shadow group">
-            <img 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvIB5etwbNJwmjYwWxo_wNYAUKQPMa8-PyT_r7UBJwLMCe4VZu1J-Sa1gv1QUhtM4Ai2G5NY2O-a6qAoNJQ8g-xnNq0IxMImlI0__kCPPBPUjSTiSqwOdWtK5bKEAq8BbldNZCU2vELUnFr8FudV_IgH3obazF52ed-lNAoCTEgIHYtFvfT19pgYQ1tt_O8FruOw3WhxWVjp-byxizfo2d6o0lBLZJnCA8p_2wxNDNkoPjHQIfbEz0_ZEmnQGPriqRHPGGJgTPpt0" 
-              alt="Manuscript"
-              className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent p-6 flex flex-col justify-end">
+          <div className="relative aspect-[4/5] overflow-hidden scholarly-shadow group bg-surface-container-highest flex items-center justify-center">
+            <span className="text-8xl font-headline opacity-10 select-none">𒆥</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent p-6 flex flex-col justify-end">
               <p className="font-headline italic text-xl text-on-surface leading-snug">
                 "The word is a living organism, evolving through the breath of its speakers."
               </p>

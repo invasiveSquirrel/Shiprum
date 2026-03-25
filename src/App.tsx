@@ -3,14 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AppContext, View } from './context';
 import Sidebar from './components/Sidebar';
 import TopNav from './components/TopNav';
 import Dashboard from './components/Dashboard';
 import Analysis from './components/Analysis';
-import Curriculum from './components/Curriculum';
 import GlobalSearch from './components/GlobalSearch';
+import AppEmbed from './components/AppEmbed';
+import Library from './components/Library';
+import Discussions from './components/Discussions';
 import { AnimatePresence } from 'motion/react';
 
 export default function App() {
@@ -20,19 +22,31 @@ export default function App() {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard />;
-      case 'analysis':
+      case 'sources':
         return <Analysis />;
-      case 'curriculum':
-        return <Curriculum />;
+      case 'discussions':
+        return <Discussions />;
       case 'search':
         return <GlobalSearch />;
+      case 'panglossia':
+        return <AppEmbed appName="panglossia" port={5173} />;
+      case 'wordhord':
+        return <AppEmbed appName="wordhord" port={5174} />;
+      case 'fonetik':
+        return <AppEmbed appName="fonetik" port={5175} />;
+      case 'struktur':
+        return <AppEmbed appName="struktur" port={5176} />;
+      case 'library':
+        return <Library />;
       default:
         return <Dashboard />;
     }
   };
 
+  const contextValue = useMemo(() => ({ currentView, setCurrentView }), [currentView]);
+
   return (
-    <AppContext.Provider value={{ currentView, setCurrentView }}>
+    <AppContext.Provider value={contextValue}>
       <div className="min-h-screen bg-surface text-on-surface font-body selection:bg-primary/30">
         <Sidebar />
         <TopNav />
@@ -45,8 +59,8 @@ export default function App() {
           </AnimatePresence>
         </main>
 
-        {/* Global Grain Overlay for texture */}
-        <div className="fixed inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay z-[100] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+        {/* Global Grain Overlay for texture - local replacement or removed to stop 403 */}
+        <div className="fixed inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay z-[100] bg-noise"></div>
       </div>
     </AppContext.Provider>
   );

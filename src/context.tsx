@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type View = 'dashboard' | 'analysis' | 'curriculum' | 'search';
+export type View = 'dashboard' | 'sources' | 'discussions' | 'search' | 'panglossia' | 'wordhord' | 'struktur' | 'fonetik' | 'library';
 
 interface AppContextType {
   currentView: View;

@@ -8,6 +8,8 @@ export interface ElectronAPI {
   getRecentDiscussions: () => Promise<any[]>;
   getGeminiKey: () => Promise<string | null>;
   getAppStats: () => Promise<any>;
+  getDeepLKey: () => Promise<string | null>;
+  saveDeepLKey: (key: string) => Promise<boolean>;
 }
 
 declare global {
