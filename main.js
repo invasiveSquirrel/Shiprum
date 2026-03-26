@@ -202,6 +202,60 @@ ipcMain.handle('list-media-files', async (event, dirPath) => {
   }
 });
 
+// Transcription & Highlighting Handlers
+ipcMain.handle('transcribe-media', async (event, { filePath, lang }) => {
+  const filename = path.basename(filePath);
+  const outPath = path.join('/home/chris/Shiprum/transcripts', `${filename}.json`);
+  
+  // Check if already transcribed
+  try {
+    const existing = await fs.readFile(outPath, 'utf-8');
+    return JSON.parse(existing);
+  } catch (e) {
+    // Proceed to transcribe
+  }
+
+  return new Promise((resolve) => {
+    const scriptPath = '/home/chris/Shiprum/scripts/transcribe.py';
+    const venvPython = '/home/chris/wordhord/backend/venv_latest/bin/python3';
+    
+    exec(`${venvPython} ${scriptPath} "${filePath}" --lang ${lang} --out "${outPath}"`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Transcription error:', stderr);
+        resolve({ error: stderr || error.message });
+      } else {
+        try {
+          fs.readFile(outPath, 'utf-8').then(data => resolve(JSON.parse(data))).catch(err => resolve({error: err.message}));
+        } catch (e) {
+          resolve({ error: 'Failed to read transcript output' });
+        }
+      }
+    });
+  });
+});
+
+ipcMain.handle('translate-transcript', async (event, { text, lang }) => {
+  const keyPath = '/home/chris/wordhord/wordhord_api.txt';
+  try {
+    const keyData = await fs.readFile(keyPath, 'utf-8');
+    const key = keyData.trim();
+    
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ roles: 'user', parts: [{ text: `Translate the following ${lang} transcript text to English. Respond ONLY with the English translation:\n\n${text}` }] }]
+      })
+    });
+    
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text.trim();
+  } catch (err) {
+    console.error('Translation error:', err);
+    return null;
+  }
+});
+
 // App Activity Stats
 ipcMain.handle('get-app-stats', async () => {
   const stats = {

@@ -12,9 +12,18 @@ import {
   Zap,
   BookOpen,
   BarChart2,
-  Rss
+  Rss,
+  FileAudio as TranscriptIcon,
+  Languages,
+  Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
+
+interface TranscriptWord {
+  word: string;
+  start_ms: number;
+  end_ms: number;
+}
 
 export default function Sources() {
   const [library, setLibrary] = useState<Record<string, string[]>>({});
@@ -26,6 +35,14 @@ export default function Sources() {
   const [currentFile, setCurrentFile] = useState<string | null>(null);
   const [analysisResults, setAnalysisResults] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<'all' | 'text' | 'media'>('all');
+  
+  // Transcription & Highlight State
+  const [transcript, setTranscript] = useState<TranscriptWord[]>([]);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [showTranslation, setShowTranslation] = useState(false);
 
   const fetchLibrary = async () => {
     try {
@@ -61,6 +78,18 @@ export default function Sources() {
     }
   }, [playbackSpeed]);
 
+  useEffect(() => {
+    let interval: any;
+    if (isPlaying && transcript.length > 0) {
+      interval = setInterval(() => {
+        if (audioRef.current) {
+          setCurrentTimeMs(audioRef.current.currentTime * 1000);
+        }
+      }, 50);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, transcript]);
+
   const handleRegister = async () => {
     try {
       if (globalThis.electronAPI?.registerSource) {
@@ -83,6 +112,45 @@ export default function Sources() {
       }
     } catch (err) {
       console.error('Analysis failed:', err);
+    }
+  };
+
+  const handleTranscribe = async () => {
+    if (!currentFile) return;
+    setIsTranscribing(true);
+    setTranscript([]);
+    setTranslation(null);
+    try {
+      if (globalThis.electronAPI?.transcribeMedia) {
+        // Detect language from file path or default to swedish
+        const langCode = currentFile.toLowerCase().includes('gaelic') ? 'ga-IE' : 
+                        currentFile.toLowerCase().includes('german') ? 'de-DE' : 'sv-SE';
+        const data = await globalThis.electronAPI.transcribeMedia({ filePath: currentFile, lang: langCode });
+        if (data && !data.error) {
+          setTranscript(data);
+        }
+      }
+    } catch (err) {
+      console.error('Transcription failed:', err);
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const handleTranslate = async () => {
+    if (transcript.length === 0) return;
+    setIsTranslating(true);
+    try {
+      if (globalThis.electronAPI?.translateTranscript) {
+        const fullText = transcript.map(w => w.word).join(' ');
+        const result = await globalThis.electronAPI.translateTranscript({ text: fullText, lang: 'foreign' });
+        setTranslation(result);
+        setShowTranslation(true);
+      }
+    } catch (err) {
+      console.error('Translation failed:', err);
+    } finally {
+      setIsTranslating(false);
     }
   };
 
@@ -268,6 +336,77 @@ export default function Sources() {
                        )}
                     </div>
                  </div>
+
+                 {/* Transcription & Highlighting UI */}
+                 {currentFile && (
+                   <div className="mt-12 border-t border-outline-variant/10 pt-10">
+                      <div className="flex justify-between items-center mb-8">
+                        <div className="flex items-center gap-4">
+                           <h3 className="text-xl font-headline italic flex items-center gap-3">
+                             <TranscriptIcon size={18} className="text-primary" /> Active Transcript
+                           </h3>
+                           {isTranscribing && <Loader2 size={16} className="animate-spin text-primary" />}
+                        </div>
+                        <div className="flex gap-4">
+                          {!transcript.length ? (
+                            <button 
+                              onClick={handleTranscribe}
+                              disabled={isTranscribing}
+                              className="px-4 py-1.5 bg-primary/10 text-primary border border-primary/20 text-[9px] uppercase font-label tracking-widest hover:bg-primary hover:text-on-primary transition-all rounded"
+                            >
+                              Generate Transcript
+                            </button>
+                          ) : (
+                            <div className="flex gap-3">
+                              <button 
+                                onClick={handleTranslate}
+                                disabled={isTranslating}
+                                className={`px-4 py-1.5 border text-[9px] uppercase font-label tracking-widest transition-all rounded flex items-center gap-2 ${
+                                  showTranslation ? 'bg-secondary text-on-secondary border-secondary' : 'bg-secondary/10 text-secondary border-secondary/20 hover:bg-secondary hover:text-on-secondary'
+                                }`}
+                              >
+                                {isTranslating ? <Loader2 size={12} className="animate-spin" /> : <Languages size={14} />}
+                                {showTranslation ? 'Hide Translation' : 'View Side-by-Side Translation'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className={`grid gap-8 ${showTranslation && translation ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                        <div className="bg-surface-container-low p-8 border border-outline-variant/10 rounded-xl min-h-[200px] max-h-[400px] overflow-y-auto custom-scrollbar leading-relaxed">
+                           {transcript.length > 0 ? (
+                             <div className="flex flex-wrap gap-x-1.5 gap-y-2">
+                               {transcript.map((w, i) => {
+                                 const isActive = currentTimeMs >= w.start_ms && currentTimeMs < w.end_ms;
+                                 return (
+                                   <span 
+                                     key={i} 
+                                     className={`text-lg font-body transition-all duration-150 rounded px-1 ${
+                                       isActive ? 'bg-primary text-on-primary scale-110 shadow-lg' : 'opacity-60 hover:opacity-100 hover:bg-primary/5'
+                                     }`}
+                                   >
+                                     {w.word}
+                                   </span>
+                                 );
+                               })}
+                             </div>
+                           ) : (
+                             <div className="flex flex-col items-center justify-center py-12 opacity-30 italic">
+                               <TranscriptIcon size={48} className="mb-4" />
+                               <p className="text-sm">No transcript active. Click "Generate" to synchronize.</p>
+                             </div>
+                           )}
+                        </div>
+
+                        {showTranslation && translation && (
+                          <div className="bg-secondary/5 p-8 border border-secondary/20 rounded-xl max-h-[400px] overflow-y-auto custom-scrollbar text-lg font-body italic leading-relaxed text-secondary-on-container opacity-80 animate-in fade-in slide-in-from-right-4 duration-500">
+                             {translation}
+                          </div>
+                        )}
+                      </div>
+                   </div>
+                 )}
                </section>
             )}
           </div>

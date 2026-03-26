@@ -24,6 +24,8 @@ contextBridge.exposeInMainWorld(
     reviseScript: (params) => ipcRenderer.invoke('revise-script', params),
     saveFile: (params) => ipcRenderer.invoke('save-file', params),
     runScript: (params) => ipcRenderer.invoke('run-script', params),
-    searchApp: (appId, query) => ipcRenderer.invoke('search-app', appId, query)
+    searchApp: (appId, query) => ipcRenderer.invoke('search-app', appId, query),
+    transcribeMedia: (params) => ipcRenderer.invoke('transcribe-media', params),
+    translateTranscript: (params) => ipcRenderer.invoke('translate-transcript', params)
   }
 );

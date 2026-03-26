@@ -11,3 +11,6 @@ discussions/
 *.json
 !package.json
 !tsconfig.json
+*_api.txt
+.env
+google-credentials.json
