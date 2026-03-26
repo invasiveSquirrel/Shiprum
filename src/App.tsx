@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { AppContext, View, Theme } from './context';
+import { AppContext, View, Theme, FontFamily } from './context';
 import Sidebar from './components/Sidebar';
 import TopNav from './components/TopNav';
 import Dashboard from './components/Dashboard';
@@ -16,16 +16,47 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(() => {
     return (localStorage.getItem('shiprum-theme') as Theme) || 'siprum';
   });
+  const [fontFamily, setFontFamily] = useState<FontFamily>(() => {
+    return (localStorage.getItem('shiprum-font') as FontFamily) || 'newsreader';
+  });
+  const [fontSize, setFontSize] = useState<number>(() => {
+    return Number(localStorage.getItem('shiprum-font-size')) || 16;
+  });
+  const [accentColor, setAccentColor] = useState<string>(() => {
+    return localStorage.getItem('shiprum-accent') || '';
+  });
+  const [glassmorphism, setGlassmorphism] = useState<boolean>(() => {
+    const saved = localStorage.getItem('shiprum-glass');
+    return saved === null ? true : saved === 'true';
+  });
+  const [activeLanguages, setActiveLanguages] = useState<string[]>(() => {
+    const saved = localStorage.getItem('shiprum-languages');
+    return saved ? JSON.parse(saved) : ['Swedish', 'Finnish', 'Dutch', 'Spanish', 'Scottish Gaelic'];
+  });
 
   useEffect(() => {
     localStorage.setItem('shiprum-theme', theme);
-    // Apply theme class to document for global variables
+    localStorage.setItem('shiprum-font', fontFamily);
+    localStorage.setItem('shiprum-font-size', fontSize.toString());
+    localStorage.setItem('shiprum-accent', accentColor);
+    localStorage.setItem('shiprum-glass', glassmorphism.toString());
+    localStorage.setItem('shiprum-languages', JSON.stringify(activeLanguages));
+
     const root = document.documentElement;
     root.classList.remove('theme-catppuccin', 'theme-github', 'theme-ocean');
     if (theme !== 'siprum') {
       root.classList.add(`theme-${theme}`);
     }
-  }, [theme]);
+
+    // Inject Custom Variables
+    root.style.setProperty('--global-font-body', fontFamily === 'newsreader' ? '"Newsreader", serif' : fontFamily === 'inter' ? '"Inter", sans-serif' : '"JetBrains Mono", monospace');
+    root.style.setProperty('--global-font-size', `${fontSize}px`);
+    if (accentColor) {
+      root.style.setProperty('--primary', accentColor);
+    }
+    root.style.setProperty('--glass-opacity', glassmorphism ? '0.7' : '1');
+  }, [theme, fontFamily, fontSize, accentColor, glassmorphism, activeLanguages]);
+
 
   const renderView = () => {
     switch (currentView) {
@@ -59,8 +90,18 @@ export default function App() {
     activeDiscussion,
     setActiveDiscussion,
     theme,
-    setTheme
-  }), [currentView, activeDiscussion, theme]);
+    setTheme,
+    fontFamily,
+    setFontFamily,
+    fontSize,
+    setFontSize,
+    accentColor,
+    setAccentColor,
+    glassmorphism,
+    setGlassmorphism,
+    activeLanguages,
+    setActiveLanguages
+  }), [currentView, activeDiscussion, theme, fontFamily, fontSize, accentColor, glassmorphism, activeLanguages]);
 
   return (
     <AppContext.Provider value={contextValue}>

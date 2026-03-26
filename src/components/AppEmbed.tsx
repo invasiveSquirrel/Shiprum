@@ -30,28 +30,41 @@ export default function AppEmbed({ appName, port }: Readonly<AppEmbedProps>) {
     };
   }, [appName]);
 
+  const { 
+    theme, 
+    fontFamily, 
+    fontSize, 
+    accentColor, 
+    glassmorphism 
+  } = useApp();
+
   useEffect(() => {
     const webview = webviewRef.current;
-    if (!webview) return;
+    if (!webview || !isReady) return;
 
-    const handleDomReady = async () => {
+    const injectCustomStyles = async () => {
+      const fontVar = fontFamily === 'newsreader' ? '"Newsreader", serif' : fontFamily === 'inter' ? '"Inter", sans-serif' : '"JetBrains Mono", monospace';
+      const customStyles = `
+        :root {
+          --global-font-body: ${fontVar};
+          --global-font-size: ${fontSize}px;
+          ${accentColor ? `--primary: ${accentColor} !important;` : ''}
+          --glass-opacity: ${glassmorphism ? '0.7' : '1'};
+        }
+        body {
+          font-family: var(--global-font-body) !important;
+          font-size: var(--global-font-size) !important;
+        }
+      `;
       try {
-        // Using a relative path that should resolve from the project root in the main process
-        const cssContent = await globalThis.electronAPI.readFile('src/styles/shiprum-guest.css');
-        await webview.insertCSS(cssContent);
-        console.log(`Injected Shiprum theme into ${appName}`);
+        await webview.insertCSS(customStyles);
       } catch (err) {
-        console.error('Failed to inject guest CSS:', err);
+        console.error('Failed to inject dynamic styles:', err);
       }
     };
 
-    webview.addEventListener('dom-ready', handleDomReady);
-    return () => {
-      webview.removeEventListener('dom-ready', handleDomReady);
-    };
-  }, [isReady, appName]);
-
-  const { theme } = useApp();
+    injectCustomStyles();
+  }, [isReady, appName, fontFamily, fontSize, accentColor, glassmorphism]);
 
   if (error) {
     return (
@@ -85,7 +98,7 @@ export default function AppEmbed({ appName, port }: Readonly<AppEmbedProps>) {
     <div className="relative w-full h-[calc(100vh-160px)] rounded-xl overflow-hidden border border-outline-variant/20 bg-black shadow-2xl">
       <webview 
         ref={webviewRef}
-        src={`http://localhost:${port}?theme=${theme}`} 
+        src={`http://localhost:${port}?theme=${theme}&font=${fontFamily}&size=${fontSize}&accent=${encodeURIComponent(accentColor)}&glass=${glassmorphism}`} 
         className="w-full h-full"
         {...{ allowpopups: "true" } as any} 
         style={{ border: 'none' }}

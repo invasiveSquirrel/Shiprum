@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld(
     runScript: (params) => ipcRenderer.invoke('run-script', params),
     searchApp: (appId, query) => ipcRenderer.invoke('search-app', appId, query),
     transcribeMedia: (params) => ipcRenderer.invoke('transcribe-media', params),
-    translateTranscript: (params) => ipcRenderer.invoke('translate-transcript', params)
+    translateTranscript: (params) => ipcRenderer.invoke('translate-transcript', params),
+    createLanguageProfile: (language) => ipcRenderer.invoke('create-language-profile', language)
   }
 );

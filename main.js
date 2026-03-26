@@ -366,6 +366,21 @@ ipcMain.handle('search-app', async (event, appId, query) => {
   }
 });
 
+ipcMain.handle('create-language-profile', async (event, language) => {
+  const strukturLibrary = '/home/chris/struktur/library';
+  const langPath = path.join(strukturLibrary, language);
+  
+  try {
+    await fs.mkdir(langPath, { recursive: true });
+    // Also trigger Fonetik generation in background if needed
+    console.log(`Created language profile for: ${language}`);
+    return { success: true, path: langPath };
+  } catch (error) {
+    console.error(`Error creating language profile: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+});
+
 ipcMain.handle('read-file', async (event, filePath) => {
   try {
     return await fs.readFile(filePath, 'utf-8');
