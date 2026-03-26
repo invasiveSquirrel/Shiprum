@@ -16,5 +16,14 @@ contextBridge.exposeInMainWorld(
     getDeepLKey: () => ipcRenderer.invoke('get-deepl-key'),
     saveDeepLKey: (key) => ipcRenderer.invoke('save-deepl-key', key),
     registerSource: () => ipcRenderer.invoke('register-source'),
+    
+    // Missing IPC methods for Sōkjan Hub
+    listMediaFiles: (dirPath) => ipcRenderer.invoke('list-media-files', dirPath),
+    runLexicalAnalysis: (params) => ipcRenderer.invoke('run-lexical-analysis', params),
+    getRssFeed: (url) => ipcRenderer.invoke('get-rss-feed', url),
+    reviseScript: (params) => ipcRenderer.invoke('revise-script', params),
+    saveFile: (params) => ipcRenderer.invoke('save-file', params),
+    runScript: (params) => ipcRenderer.invoke('run-script', params),
+    searchApp: (appId, query) => ipcRenderer.invoke('search-app', appId, query)
   }
 );

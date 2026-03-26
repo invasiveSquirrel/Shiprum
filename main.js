@@ -161,6 +161,47 @@ ipcMain.handle('get-recent-discussions', async () => {
   }
 });
 
+// Enhanced File & Analysis Handlers
+ipcMain.handle('run-lexical-analysis', async (event, { filePath, lang }) => {
+  return new Promise((resolve) => {
+    const scriptPath = '/home/chris/wordhord/analyze_corpus.py';
+    exec(`python3 ${scriptPath} "${filePath}" --lang ${lang} --json`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Analysis error:', stderr);
+        resolve({ error: stderr || error.message });
+      } else {
+        try {
+          resolve(JSON.parse(stdout));
+        } catch (e) {
+          resolve({ error: 'Failed to parse JSON output' });
+        }
+      }
+    });
+  });
+});
+
+import https from 'node:https';
+ipcMain.handle('get-rss-feed', async (event, url) => {
+  return new Promise((resolve) => {
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => resolve(data));
+    }).on('error', (err) => resolve(null));
+  });
+});
+
+ipcMain.handle('list-media-files', async (event, dirPath) => {
+  try {
+    const files = await fs.readdir(dirPath);
+    const mediaExtensions = new Set(['.mp3', '.mp4', '.m4a', '.wav', '.mkv']);
+    return files.filter(f => mediaExtensions.has(path.extname(f).toLowerCase()));
+  } catch (err) {
+    console.error('Media listing error:', err);
+    return [];
+  }
+});
+
 // App Activity Stats
 ipcMain.handle('get-app-stats', async () => {
   const stats = {
@@ -192,6 +233,82 @@ ipcMain.handle('save-deepl-key', async (event, key) => {
   } catch (err) {
     console.error('Error saving DeepL Key:', err);
     return false;
+  }
+});
+
+ipcMain.handle('run-script', async (event, { scriptPath, args = [] }) => {
+  return new Promise((resolve) => {
+    exec(`python3 ${scriptPath} ${args.join(' ')}`, (error, stdout, stderr) => {
+      resolve({ stdout, stderr, error: error ? error.message : null });
+    });
+  });
+});
+
+ipcMain.handle('revise-script', async (event, { code, prompt }) => {
+  const keyPath = '/home/chris/wordhord/wordhord_api.txt';
+  try {
+    const keyData = await fs.readFile(keyPath, 'utf-8');
+    const key = keyData.trim();
+    const systemPrompt = "You are an expert Python developer. Your task is to revise the provided script based on the user's request. Return ONLY the modified code, no explanations or markdown blocks.";
+    const userMessage = `Prompt: ${prompt}\n\nCode:\n${code}`;
+    
+    // Using simple fetch to Gemini API
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ roles: 'user', parts: [{ text: `${systemPrompt}\n\n${userMessage}` }] }]
+      })
+    });
+    
+    const data = await response.json();
+    const revisedCode = data.candidates[0].content.parts[0].text.trim();
+    // Clean up if Gemini adds markdown blocks
+    return revisedCode.replace(/^```python\n/, '').replace(/\n```$/, '');
+  } catch (err) {
+    console.error('Revision error:', err);
+    return null;
+  }
+});
+
+ipcMain.handle('save-file', async (event, { filePath, content }) => {
+  try {
+    await fs.writeFile(filePath, content, 'utf-8');
+    return true;
+  } catch (err) {
+     return false;
+  }
+});
+
+// Universal Search Bridge for Sub-Apps
+ipcMain.handle('search-app', async (event, appId, query) => {
+  const basePaths = {
+    panglossia: '/home/chris/panglossia/history',
+    wordhord: '/home/chris/wordhord/vocabs',
+    fonetik: '/home/chris/fonetik/data',
+    struktur: '/home/chris/struktur/library'
+  };
+
+  const searchPath = basePaths[appId];
+  if (!searchPath) return [];
+
+  try {
+    const files = await fs.readdir(searchPath);
+    const results = [];
+    
+    for (const file of files) {
+      if (file.toLowerCase().includes(query.toLowerCase())) {
+        results.push({
+          id: `${appId}-${file}`,
+          title: file,
+          desc: `Found in ${appId} archive.`,
+          source: appId
+        });
+      }
+    }
+    return results;
+  } catch (err) {
+    return [];
   }
 });
 

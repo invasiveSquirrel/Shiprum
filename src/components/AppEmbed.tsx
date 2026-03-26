@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useApp } from '../context';
 
 interface AppEmbedProps {
   appName: string;
@@ -50,6 +51,8 @@ export default function AppEmbed({ appName, port }: Readonly<AppEmbedProps>) {
     };
   }, [isReady, appName]);
 
+  const { theme } = useApp();
+
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-[600px] bg-surface-container rounded-xl border border-outline-variant/20 p-8 text-center">
@@ -82,7 +85,7 @@ export default function AppEmbed({ appName, port }: Readonly<AppEmbedProps>) {
     <div className="relative w-full h-[calc(100vh-160px)] rounded-xl overflow-hidden border border-outline-variant/20 bg-black shadow-2xl">
       <webview 
         ref={webviewRef}
-        src={`http://localhost:${port}`} 
+        src={`http://localhost:${port}?theme=${theme}`} 
         className="w-full h-full"
         {...{ allowpopups: "true" } as any} 
         style={{ border: 'none' }}

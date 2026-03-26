@@ -103,8 +103,8 @@ export default function GlobalSearch() {
             <Command className="text-primary" size={32} />
           </div>
         </div>
-        <h1 className="text-5xl font-headline italic mb-4">Sōkjan Hub</h1>
-        <p className="text-outline-variant font-body uppercase tracking-[0.3em] text-[10px]">Universal Linguistic Intelligence</p>
+        <h1 className="text-5xl font-headline italic mb-4">Sōkjan</h1>
+        <p className="text-outline-variant font-body uppercase tracking-[0.3em] text-[10px]">Universal Linguistic Intelligence Search</p>
       </header>
 
       <div className="bg-surface-container-low border border-outline-variant/10 shadow-2xl p-2 rounded-2xl mb-8">

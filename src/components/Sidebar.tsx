@@ -8,7 +8,8 @@ import {
   Settings, 
   HelpCircle,
   Search,
-  MessageSquare
+  MessageSquare,
+  PlayCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -22,8 +23,8 @@ export default function Sidebar() {
     { id: 'wordhord', icon: <BookOpen size={22} />, label: 'Wordhord Lexicon' },
     { id: 'fonetik', icon: <Mic2 size={20} />, label: 'Fonetik IPA' },
     { id: 'struktur', icon: <Network size={22} />, label: 'Struktur Syntax' },
-    { id: 'library', icon: <Search size={22} />, label: 'Research Sources' },
-    { id: 'discussions' as const, label: 'Sōkjan', icon: <Search size={22} /> },
+    { id: 'library', icon: <PlayCircle size={22} />, label: 'Sources' },
+    { id: 'search', label: 'Search', icon: <Search size={22} /> },
   ];
 
   return (
@@ -93,9 +94,14 @@ export default function Sidebar() {
           <div className="w-10 flex-shrink-0 flex justify-center"><Search size={22} /></div>
           {isExpanded && <span className="text-[11px] font-label uppercase tracking-widest whitespace-nowrap">Global Search</span>}
         </button>
-        <button className="flex items-center gap-4 p-3 text-outline opacity-60 hover:opacity-100 hover:bg-surface-container-highest/50 rounded-lg transition-all">
+        <button 
+          onClick={() => setCurrentView('settings')}
+          className={`flex items-center gap-4 p-3 rounded-lg transition-all ${
+            currentView === 'settings' ? 'text-primary bg-primary/5' : 'text-outline opacity-60 hover:opacity-100 hover:bg-surface-container-highest/50'
+          }`}
+        >
           <div className="w-10 flex-shrink-0 flex justify-center"><Settings size={22} /></div>
-          {isExpanded && <span className="text-[11px] font-label uppercase tracking-widest whitespace-nowrap">Settings</span>}
+          {isExpanded && <span className="text-[11px] font-label uppercase tracking-widest whitespace-nowrap">Hub Settings</span>}
         </button>
         <button className="flex items-center gap-4 p-3 text-outline opacity-60 hover:opacity-100 hover:bg-surface-container-highest/50 rounded-lg transition-all">
           <div className="w-10 flex-shrink-0 flex justify-center"><HelpCircle size={22} /></div>

@@ -1,4 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
+
+:root {
+  /* Default: Šiprum */
+  --surface: #0c0e11;
+  --on-surface: #e0e6f1;
+  --primary: #cec6b5;
+  --on-primary: #454033;
+  --primary-container: #4c463a;
+  --secondary: #979ead;
+  --outline: #707680;
+  --container-low: #111418;
+  --container-high: #1b2027;
+  --container-highest: #20262e;
+}
+
+.theme-catppuccin {
+  --surface: #24273a;
+  --on-surface: #cad3f5;
+  --primary: #8aadf4;
+  --on-primary: #24273a;
+  --primary-container: #363a4f;
+  --secondary: #f5bde6;
+  --outline: #939ab7;
+  --container-low: #1e2030;
+  --container-high: #363a4f;
+  --container-highest: #494d64;
+}
+
+.theme-github {
+  --surface: #010409;
+  --on-surface: #c9d1d9;
+  --primary: #58a6ff;
+  --on-primary: #0d1117;
+  --primary-container: #1f6feb;
+  --secondary: #aff5b4;
+  --outline: #484f58;
+  --container-low: #0d1117;
+  --container-high: #161b22;
+  --container-highest: #21262d;
+}
+
+.theme-ocean {
+  --surface: #001219;
+  --on-surface: #94d2bd;
+  --primary: #ee9b00;
+  --on-primary: #001219;
+  --primary-container: #005f73;
+  --secondary: #ca6702;
+  --outline: #005f73;
+  --container-low: #001219;
+  --container-high: #002129;
+  --container-highest: #005f73;
+}
 
 @theme {
   --font-headline: "Newsreader", serif;
@@ -6,32 +60,24 @@
   --font-label: "Inter", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  --color-surface: #0c0e11;
-  --color-on-surface: #e0e6f1;
-  --color-primary: #cec6b5;
-  --color-on-primary: #454033;
-  --color-primary-container: #4c463a;
-  --color-on-primary-container: #d8cfbf;
-  --color-secondary: #979ead;
-  --color-on-secondary: #19202c;
-  --color-secondary-container: #353c48;
-  --color-on-secondary-container: #b9bfcf;
-  --color-outline: #707680;
-  --color-outline-variant: #424851;
-  --color-surface-container-lowest: #000000;
-  --color-surface-container-low: #111418;
-  --color-surface-container: #161a1f;
-  --color-surface-container-high: #1b2027;
-  --color-surface-container-highest: #20262e;
-  --color-on-surface-variant: #a5abb6;
+  --color-surface: var(--surface);
+  --color-on-surface: var(--on-surface);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-secondary: var(--secondary);
+  --color-outline: var(--outline);
+  --color-surface-container-low: var(--container-low);
+  --color-surface-container: var(--container-low);
+  --color-surface-container-high: var(--container-high);
+  --color-surface-container-highest: var(--container-highest);
 }
 
 @layer base {
-  @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
   body {
     @apply bg-surface text-on-surface font-body selection:bg-primary/30;
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.4s ease, color 0.4s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
